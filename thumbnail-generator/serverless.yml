@@ -4,7 +4,24 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: python3.8
+  runtime: python3.9
+  profile: serverless-admin
+  region: eu-west-1
+  stage: dev
+  timeout: 10
+  memorySize: 128
+  environment:
+    THUMBNAIL_SIZE: 128
+    REGION_NAME: $(self:provider.region)
+
+  # Setup IAM Roles
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Resource: '*'
+          Action: 'S3:*'
+
 
 functions:
   hello:
