@@ -4,7 +4,7 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.8
   profile: serverless-admin
   region: eu-west-1
   stage: dev
@@ -13,6 +13,7 @@ provider:
   environment:
     THUMBNAIL_SIZE: 128
     REGION_NAME: $(self:provider.region)
+    DYNAMODB_TABLE: ${self:custom.dynamoTable}
 
   # Setup IAM Roles
   iam:
@@ -21,8 +22,34 @@ provider:
         - Effect: 'Allow'
           Resource: '*'
           Action: 'S3:*'
+        - Effect: 'Allow'
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
+custom:
+  bucket: my-thumbnails-rob
+  dynamoTable: image-url-table
+  pythonRequirements:
+  # Prepare the dependencies using a Linux environment 
+    dockerizePip: true
 
 functions:
-  hello:
-    handler: handler.hello
+  thumbnail_generator:
+    handler: handler.thumbnail_generator
+    events:
+      - s3:
+          bucket: ${self:custom.bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .png
+    
+plugins:
+  # automatically bundle dependencies from requirements.txt and make them
+  # available in PYTHONPATH
+  - serverless-python-requirements

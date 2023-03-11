@@ -2,13 +2,15 @@ import json
 import os
 import uuid
 from datetime import datetime
+from io import BytesIO
 
 import boto3
-from io import BytesIO
+# Need to add layer foir PIL via dependency injection
 from PIL import Image, ImageOps
 
 s3 = boto3.client("s3")
-IMAGE_SIZE = int(os.environ("THUMBNAIL_SIZE"))
+IMAGE_SIZE = int(os.environ["THUMBNAIL_SIZE"])
+DB_TABLE = str(os.environ["DYNAMODB_TABLE"])
 
 
 def thumbnail_generator(event, context):
@@ -22,7 +24,7 @@ def thumbnail_generator(event, context):
        json response
     """
 
-    print("EVENT:::", event)
+    print("EVENT INFO:::", event)
 
     bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
     key = event["Records"][0]["s3"]["object"]["key"]
@@ -67,11 +69,12 @@ def thumbnail_generator(event, context):
         Returns:
             string: Name of thumbnail
         """
+        # Split off .png file extension
         image_name = key.rsplit(".", 1)
         thumbnail_name = image_name[0] + "_thumbnail.png"
         return thumbnail_name
 
-    def upload_to_s3(bucket_name, key, image, image_size):
+    def upload_to_s3(bucket_name, thumbnail_key, image, image_size):
         """Upload image to s3 bucket as a BytesIO object.
 
         Args:
@@ -81,28 +84,28 @@ def thumbnail_generator(event, context):
             image_size (int): size of image
 
         Returns:
-            _type_: _description_
+            dict: status code and body
         """
 
         out_thumbnail = BytesIO()
 
-        image.save(out_thumbnail, 'PNG')
+        image.save(out_thumbnail, "PNG")
         # Get back to beginning of the file
         out_thumbnail.seek(0)
 
         response = s3.put_object(
             # Access Control List
-            ACL='public-read',
-            Body= out_thumbnail,
+            ACL="public-read",
+            Body=out_thumbnail,
             Bucket=bucket_name,
-            ContentType = 'image/png',
-            Key=key
+            ContentType="image/png",
+            Key=thumbnail_key,
         )
         print(response)
 
-        url = '{}/{}/{}'.format(s3.meta.endpoint_url,bucket_name,key)
+        url = "{}/{}/{}".format(s3.meta.endpoint_url, bucket_name, key)
 
-
+        return url
 
     # Only want an image that isn't already a thumbnail
     if not key.endswith("_thumbnail.png"):
