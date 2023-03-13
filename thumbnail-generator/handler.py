@@ -34,7 +34,7 @@ def thumbnail_generator(event, context): # NOSONAR
 
     # Only want an image that isn't already a thumbnail
     if not key.endswith("_thumbnail.png"):
-        image = get_image(bucket_name, key)
+        image = get_s3_image(bucket_name, key)
         thumbnail = resize_image(image)
         thumbnail_key = generate_thumbnail_file_name(key)
 
@@ -42,15 +42,8 @@ def thumbnail_generator(event, context): # NOSONAR
 
         return url
 
-    body = {
-        "message": "Go Serverless v3.0! Your function executed successfully!",
-        "input": event,
-    }
 
-    return {"statusCode": 200, "body": json.dumps(body)}
-
-
-def get_image(bucket_name, key):
+def get_s3_image(bucket_name, key):
     """Get the image from the s3 bucket.
 
     Args:
@@ -161,8 +154,30 @@ def save_thumbnail_url_to_db(path, image_size):
     }
 
 
-def list_thumbnail_urls(event, context):
-    return
+def list_thumbnail_urls(event, context): # NOSONAR
+    """ List all image urls from the DB in json format
+
+    Args:
+        event : data passed to the function upon execution
+        context : info about current execution environment
+
+    Returns:
+       json response
+    """
+    table = DYNAMODB.Table(DB_TABLE)
+    response = table.scan()
+    data = response['Items']
+    print(f"Data is {data}")
+
+    while 'LastEvaluatedKey' in response:
+        response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+        data.extend(response['Items'])
+
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps(data)
+    }    
 
 
 def get_image(event, context): # NOSONAR
