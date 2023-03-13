@@ -15,7 +15,7 @@ DB_TABLE = str(os.environ["DYNAMODB_TABLE"])
 DYNAMODB = boto3.resource("dynamodb", region_name=str(os.environ["REGION_NAME"]))
 
 
-def thumbnail_generator(event, context):
+def thumbnail_generator(event, context): # NOSONAR
     """Generate thumbnail for image in s3 bucket
 
     Args:
@@ -165,7 +165,7 @@ def list_thumbnail_urls(event, context):
     return
 
 
-def get_image(event, context):
+def get_image(event, context): # NOSONAR
     """Get image based on its id
 
     Args:
@@ -192,7 +192,7 @@ def get_image(event, context):
     }    
 
 
-def delete_image(event, context):
+def delete_image(event, context): # NOSONAR
     """Delete image based on its id
 
     Args:
