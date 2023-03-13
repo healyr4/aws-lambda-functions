@@ -49,6 +49,23 @@ functions:
           rules:
             - suffix: .png
 
+  list:
+    handler: handler.list_thumbnail_urls
+    events:
+      - http:
+          path: images/all
+          method: get 
+          # Cross Origin Resource Sharing
+          cors: true
+  get:
+    handler: handler.get_item
+    events:
+      - http:
+          # id comes from attribute name
+          path: images/get/{id}
+          method: get 
+          cors: true
+
 resources:
   Resources:
     ImagesDynamoDbTable:
