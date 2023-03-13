@@ -58,12 +58,20 @@ functions:
           # Cross Origin Resource Sharing
           cors: true
   get:
-    handler: handler.get_item
+    handler: handler.get_image
     events:
       - http:
           # id comes from attribute name
           path: images/get/{id}
           method: get 
+          cors: true
+  delete:
+    handler: handler.delete_image
+    events:
+      - http:
+          # id comes from attribute name
+          path: images/delete/{id}
+          method: delete 
           cors: true
 
 resources:

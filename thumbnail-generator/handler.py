@@ -12,8 +12,8 @@ from PIL import Image, ImageOps
 s3 = boto3.client("s3")
 IMAGE_SIZE = int(os.environ["THUMBNAIL_SIZE"])
 DB_TABLE = str(os.environ["DYNAMODB_TABLE"])
-DYNAMODB = boto3.resource(
-    'dynamodb', region_name=str(os.environ['REGION_NAME']))
+DYNAMODB = boto3.resource("dynamodb", region_name=str(os.environ["REGION_NAME"]))
+
 
 def thumbnail_generator(event, context):
     """Generate thumbnail for image in s3 bucket
@@ -49,6 +49,7 @@ def thumbnail_generator(event, context):
 
     return {"statusCode": 200, "body": json.dumps(body)}
 
+
 def get_image(bucket_name, key):
     """Get the image from the s3 bucket.
 
@@ -65,6 +66,7 @@ def get_image(bucket_name, key):
     image_data = BytesIO(image_content)
     return Image.open(image_data)
 
+
 def resize_image(image):
     """Generate thumbnail from image
 
@@ -74,10 +76,9 @@ def resize_image(image):
     Returns:
         BinaryIO: image in binary format
     """
-    thumbnail = ImageOps.fit(
-        image, (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.LANCZOS
-    )
+    thumbnail = ImageOps.fit(image, (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.LANCZOS)
     return thumbnail
+
 
 def generate_thumbnail_file_name(key):
     """Isolate the image name and add the thumbnail ending.
@@ -92,6 +93,7 @@ def generate_thumbnail_file_name(key):
     image_name = key.rsplit(".", 1)
     thumbnail_name = image_name[0] + "_thumbnail.png"
     return thumbnail_name
+
 
 def upload_thumbnail_to_s3(bucket_name, thumbnail_key, image, image_size):
     """Upload image to s3 bucket as a BytesIO object.
@@ -129,6 +131,7 @@ def upload_thumbnail_to_s3(bucket_name, thumbnail_key, image, image_size):
 
     return url
 
+
 def save_thumbnail_url_to_db(path, image_size):
     """_summary_
 
@@ -152,7 +155,79 @@ def save_thumbnail_url_to_db(path, image_size):
     )
 
     return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps(response)
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(response),
     }
+
+
+def list_thumbnail_urls(event, context):
+    return
+
+
+def get_image(event, context):
+    """Get image based on its id
+
+    Args:
+        event : data passed to the function upon execution
+        context : info about current execution environment
+
+    Returns:
+       json response
+    """
+    image_id = event["pathParameters"]["id"]
+    table = DYNAMODB.Table(DB_TABLE)
+    response = table.get_item(Key={
+        "id": image_id
+    })
+
+    item = response["Item"]
+
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps(item),
+        'isBase64Encoded': False,
+    }    
+
+
+def delete_image(event, context):
+    """Delete image based on its id
+
+    Args:
+        event : data passed to the function upon execution
+        context : info about current execution environment
+
+    Returns:
+       json response
+    """    
+    image_id = event['pathParameters']['id']
+
+    # Default response
+    error_response = {
+        "statusCode": 500,
+        "body": f"An error occured while deleting item of id: {image_id}"
+    }
+
+    table = DYNAMODB.Table(DB_TABLE)
+    response = table.delete_item(Key={
+        "id": image_id
+    })
+
+    success_response = {
+        "deleted": True,
+        "itemDeletedId": image_id
+    }
+    
+   # Check if delete was ssuccesasful 
+    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+        response = {
+            "statusCode": 200,
+            'headers': {'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps(success_response),
+        }
+    else:
+        response = error_response
+    return response    
