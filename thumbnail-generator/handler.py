@@ -15,7 +15,7 @@ DB_TABLE = str(os.environ["DYNAMODB_TABLE"])
 DYNAMODB = boto3.resource("dynamodb", region_name=str(os.environ["REGION_NAME"]))
 
 
-def thumbnail_generator(event, context): # NOSONAR
+def thumbnail_generator(event, context):  # NOSONAR
     """Generate thumbnail for image in s3 bucket
 
     Args:
@@ -154,8 +154,8 @@ def save_thumbnail_url_to_db(path, image_size):
     }
 
 
-def list_thumbnail_urls(event, context): # NOSONAR
-    """ List all image urls from the DB in json format
+def list_thumbnail_urls(event, context):  # NOSONAR
+    """List all image urls from the DB in json format
 
     Args:
         event : data passed to the function upon execution
@@ -166,21 +166,21 @@ def list_thumbnail_urls(event, context): # NOSONAR
     """
     table = DYNAMODB.Table(DB_TABLE)
     response = table.scan()
-    data = response['Items']
+    data = response["Items"]
     print(f"Data is {data}")
 
-    while 'LastEvaluatedKey' in response:
-        response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-        data.extend(response['Items'])
+    while "LastEvaluatedKey" in response:
+        response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
+        data.extend(response["Items"])
 
     return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps(data)
-    }    
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(data),
+    }
 
 
-def get_image(event, context): # NOSONAR
+def get_image(event, context):  # NOSONAR
     """Get image based on its id
 
     Args:
@@ -192,22 +192,22 @@ def get_image(event, context): # NOSONAR
     """
     image_id = event["pathParameters"]["id"]
     table = DYNAMODB.Table(DB_TABLE)
-    response = table.get_item(Key={
-        "id": image_id
-    })
+    response = table.get_item(Key={"id": image_id})
 
     item = response["Item"]
 
     return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps(item),
-        'isBase64Encoded': False,
-    }    
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+        },
+        "body": json.dumps(item),
+        "isBase64Encoded": False,
+    }
 
 
-def delete_image(event, context): # NOSONAR
+def delete_image(event, context):  # NOSONAR
     """Delete image based on its id
 
     Args:
@@ -216,33 +216,30 @@ def delete_image(event, context): # NOSONAR
 
     Returns:
        json response
-    """    
-    image_id = event['pathParameters']['id']
+    """
+    image_id = event["pathParameters"]["id"]
 
     # Default response
     error_response = {
         "statusCode": 500,
-        "body": f"An error occured while deleting item of id: {image_id}"
+        "body": f"An error occured while deleting item of id: {image_id}",
     }
 
     table = DYNAMODB.Table(DB_TABLE)
-    response = table.delete_item(Key={
-        "id": image_id
-    })
+    response = table.delete_item(Key={"id": image_id})
 
-    success_response = {
-        "deleted": True,
-        "itemDeletedId": image_id
-    }
-    
-   # Check if delete was ssuccesasful 
-    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+    success_response = {"deleted": True, "itemDeletedId": image_id}
+
+    # Check if delete was ssuccesasful
+    if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
         response = {
             "statusCode": 200,
-            'headers': {'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps(success_response),
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": json.dumps(success_response),
         }
     else:
         response = error_response
-    return response    
+    return response
