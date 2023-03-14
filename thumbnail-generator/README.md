@@ -23,6 +23,7 @@ The serverless template created via the [Serverless Framework](https://github.co
 4. The thumbnails can be accessed and deleted by ID via an API Gateway. All thumbnails can also be listed. 
 
 ![Diagram Overview](misc/thumbnail_gen_diagram.png)
+
 Figure 1. Diagram showing high-level overview. 
 ### Useful Commands: 
 serverless plugin install -n serverless-python-requirements
