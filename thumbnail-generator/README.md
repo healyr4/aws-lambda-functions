@@ -30,6 +30,6 @@ serverless plugin install -n serverless-python-requirements
 
 pip freeze | Out-File -Encoding UTF8 requirements.txt
 
-serverless deploy function -f thumbnail_generator
+serverless deploy function -f thumbnail_generator --region=eu-west-1
 
 serverless remove
