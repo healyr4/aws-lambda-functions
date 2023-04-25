@@ -12,6 +12,11 @@ module.exports.createContact = async (event,context) => {
   // Check if properties have been set correctly
   if(!to || !from || !subject || !message){
     const response = {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Methods": "*",
+        "Access-Control-Allow-Origin": "*",
+      },
       statusCode: 400,
       body: JSON.stringify({message: "One of the properties are not set correctly"})
     };
@@ -20,15 +25,15 @@ module.exports.createContact = async (event,context) => {
   
   const emailParams = {
     Destination: {
-      ToAddress: [to]
+      ToAddresses: [to],
     },
     Message: {
       Subject: { Data:subject},
       Body: {
         Text: { Data: message}
       },
+    },
     Source: from
-    }
   }
 
   try{
@@ -36,6 +41,11 @@ module.exports.createContact = async (event,context) => {
     await ses.sendEmail(emailParams).promise();
     return {
       statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Methods": "*",
+        "Access-Control-Allow-Origin": "*",
+      },
       body: JSON.stringify({message: "Email has been sent successfully.",
         success: true})
     }
@@ -44,6 +54,11 @@ module.exports.createContact = async (event,context) => {
       console.error(error);
       return {
         statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Methods": "*",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({message: "Email failed to send.",
         success: false}) 
       }
